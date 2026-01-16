@@ -14,6 +14,12 @@ const postcssImport = require('postcss-import');
 
 const STATIC_PATH = process.env.STATIC_PATH || '/static';
 
+const packageJson = require('./package.json');
+const deps = [
+    ...Object.keys(packageJson.dependencies),
+    ...Object.keys(packageJson.peerDependencies)
+];
+
 const base = {
     mode: process.env.NODE_ENV === 'production' ? 'production' : 'development',
     devtool: 'cheap-module-source-map',
@@ -228,10 +234,7 @@ module.exports = [
                 path: path.resolve('dist'),
                 publicPath: `${STATIC_PATH}/`
             },
-            externals: {
-                'react': 'react',
-                'react-dom': 'react-dom'
-            },
+            externals: Object.fromEntries(deps.map(x => [x, x])),
             module: {
                 rules: base.module.rules.concat([
                     {
