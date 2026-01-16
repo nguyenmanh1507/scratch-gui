@@ -149,7 +149,7 @@ module.exports = [
                     test: /\.(svg|png|wav|mp3|gif|jpg)$/,
                     loader: 'url-loader',
                     options: {
-                        limit: 2048,
+                        limit: 256,
                         outputPath: 'static/assets/'
                     }
                 }
