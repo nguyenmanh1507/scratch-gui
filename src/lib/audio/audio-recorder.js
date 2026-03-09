@@ -6,6 +6,7 @@ import {computeRMS, computeChunkedRMS} from './audio-util.js';
 class AudioRecorder {
     constructor () {
         this.audioContext = new SharedAudioContext();
+        this.previousAudioSessionType = null;
         this.bufferLength = 8192;
 
         this.userMediaStream = null;
@@ -23,6 +24,15 @@ class AudioRecorder {
 
     startListening (onStarted, onUpdate, onError) {
         try {
+
+            // AudioSession in learner app defaults to 'playback',
+            // which causes InvalidStateError on Safari when get user media.
+            // Switch to 'play-and-record' before requesting
+            // the microphone to avoid InvalidStateError on Safari.
+            if (typeof navigator !== 'undefined' && navigator.audioSession) {
+                this.previousAudioSessionType = navigator.audioSession.type;
+                navigator.audioSession.type = 'play-and-record';
+            }
             getUserMedia({audio: true})
                 .then(userMediaStream => {
                     if (!this.disposed) {
@@ -131,6 +141,11 @@ class AudioRecorder {
             this.sourceNode.disconnect();
             this.mediaStreamSource.disconnect();
             this.userMediaStream.getAudioTracks()[0].stop();
+        }
+        // Restore the original AudioSession type so playback-only audio
+        // elsewhere in the app is not affected after recording ends.
+        if (typeof navigator !== 'undefined' && navigator.audioSession && this.previousAudioSessionType) {
+            navigator.audioSession.type = this.previousAudioSessionType;
         }
         this.disposed = true;
     }
